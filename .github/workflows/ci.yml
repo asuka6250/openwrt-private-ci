@@ -63,7 +63,16 @@ jobs:
     steps:
     - name: Checkout Public Source
       run: |
-        git clone --depth 1 -b ${{ github.event.inputs.repo_branch }} ${{ github.event.inputs.repo_url }} openwrt
+        REPO_URL="${{ github.event.inputs.repo_url }}"
+        REPO_BRANCH="${{ github.event.inputs.repo_branch }}"
+        
+        # 判断是否为私有仓库 (包含 sora-shao)
+        if [[ "$REPO_URL" == *"sora-shao"* ]]; then.
+          AUTH_URL=$(echo "$REPO_URL" | sed "s|https://github.com/|https://sora-shao:${{ secrets.MY_PRIVATE_REPO_TOKEN }}@github.com/|g")
+          git clone --depth 1 -b "$REPO_BRANCH" "$AUTH_URL" openwrt
+        else
+          git clone --depth 1 -b "$REPO_BRANCH" "$REPO_URL" openwrt
+        fi
 
     - name: Checkout Private Tools
       # 仅当源码地址不包含你的用户名时，才拉取 tools 分支进行注入
