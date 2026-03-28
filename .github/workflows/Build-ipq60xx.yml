@@ -1,4 +1,4 @@
-name: CI (Adapted Source Build)
+name: Build-ipq60xx
 
 on:
   workflow_dispatch:
