@@ -129,7 +129,7 @@ jobs:
           chmod +x my_openwrt_custom/sync.sh
           ./my_openwrt_custom/sync.sh "$GITHUB_WORKSPACE/openwrt"
           # 复制对应的种子配置
-          cp "my_openwrt_custom/.config-${{ matrix.device }}" "openwrt/.config"
+          # cp "my_openwrt_custom/.config-${{ matrix.device }}" "openwrt/.config"
         else
           # 如果是私有库，直接找源码里的配置
           cp "openwrt/.config-${{ matrix.device }}" "openwrt/.config" || true
