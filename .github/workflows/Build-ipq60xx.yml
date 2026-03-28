@@ -234,8 +234,6 @@ jobs:
           🌿 源码分支: ${{ github.event.inputs.repo_branch }}
           📱 目标机型: ${{ matrix.device }}
           🧩 额外插件: ${{ github.event.inputs.extra_plugins || '无' }}
-          ---
-          本地仓库产物：仅包含软件包 (Packages)
         prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -255,8 +253,6 @@ jobs:
           🌿 源码分支: ${{ github.event.inputs.repo_branch }}
           📱 目标机型: ${{ matrix.device }}
           🧩 额外插件: ${{ github.event.inputs.extra_plugins || '无' }}
-          ---
-          私人仓库全量产物：固件 + 软件包
         prerelease: false
 
     - name: Delete Old Cache
