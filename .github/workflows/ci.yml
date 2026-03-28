@@ -6,11 +6,11 @@ on:
       repo_url:
         description: '🌐 OpenWrt 源码地址'
         required: true
-        default: 'https://github.com/sora-shao/openwrt-private'
+        default: 'https://github.com/openwrt/openwrt'
       repo_branch:
         description: '🌿 源码分支'
         required: true
-        default: 'openwrt-v25.12.1'
+        default: 'main'
       build_parallel:
         description: '🚀 开启并行编译 (同时跑两个设备)'
         required: false
@@ -28,6 +28,11 @@ on:
         description: '🧩 额外插件 (空格分隔)'
         required: false
         default: ''
+      luci_version:
+        description: 'immortal-luci-version'
+        required: false
+        default: ''
+
 
 env:
   TZ: Asia/Shanghai
@@ -136,7 +141,7 @@ jobs:
         ./scripts/feeds update -a
         rm -rf feeds/luci/modules/luci-mod-status
         if [[ ! "$REPO_URL" == *"immortalwrt"* ]]; then
-          [ -f "init.sh" ] && bash init.sh || echo "未找到 init.sh，跳过。"
+          [ -f "init.sh" ] && bash init.sh "$luci_version" || echo "未找到 init.sh，跳过。"
         fi
         wc -l feeds/luci/modules/luci-base/root/usr/share/rpcd/ucode/luci
         ./scripts/feeds install -a
