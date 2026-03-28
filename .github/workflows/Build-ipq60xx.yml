@@ -214,6 +214,7 @@ jobs:
         rm -rf openwrt/bin/targets/qualcommax/ipq60xx/packages/base-file*
         cd openwrt
         make package/index || echo 1
+        cd ../
         tar -zcvf "./output/$PKG_FILE" -C openwrt/bin/targets/qualcommax/ipq60xx/ packages/
         cp "./output/$PKG_FILE" ./output/local_only/
         cp "./output/$PKG_FILE" ./output/private_all/
