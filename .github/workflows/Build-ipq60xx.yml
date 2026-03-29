@@ -12,17 +12,17 @@ on:
         required: true
         default: 'main'
       use_cache:
-        description: '💾 使用编译缓存 (提升速度)'
+        description: '💾 使用编译缓存'
         required: false
         type: boolean
         default: false
       build_parallel:
-        description: '🚀 开启并行编译 (同时跑两个设备)'
+        description: '🚀 同时编译'
         required: false
         type: boolean
         default: false
       single_device:
-        description: '📱 单一目标设备 (不并行时生效)'
+        description: '📱 选择编译设备'
         required: true
         default: 'nn6000-v2'
         type: choice
