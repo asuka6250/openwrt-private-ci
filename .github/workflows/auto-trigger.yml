@@ -1,41 +1,75 @@
 name: Auto-Trigger OpenWrt Build
+
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 16,20,0,4,8,12 * * *' 
   workflow_dispatch:
 
 jobs:
   check-and-dispatch:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Get Latest Tag from OpenWrt
         id: get_tag
         run: |
-          # Command to get the latest tag
-          latest_tag=$(git describe --tags)
-          echo "::set-output name=tag::$latest_tag"
+          LATEST_TAG=$(git ls-remote --tags https://github.com/openwrt/openwrt.git | \
+            grep -v "\^{}" | \
+            cut -f2 | \
+            sed 's|refs/tags/||' | \
+            sort -V | \
+            tail -n1)
+          
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "✅ 探测到 OpenWrt 最新 Tag: $LATEST_TAG"
 
       - name: Restore Last Processed Tag
         id: restore_cache
-        run: |
-          # Command to restore the last processed tag if needed
-          if [ -f tag.cache ]; then
-            last_tag=$(cat tag.cache)
-            echo "Restored last tag: $last_tag"
-          fi
+        uses: actions/cache/restore@v4
+        with:
+          path: last_tag.txt
+          key: last-processed-tag-${{ steps.get_tag.outputs.latest_tag }}
+          restore-keys: |
+            last-processed-tag-
 
       - name: Compare and Trigger Build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LATEST_TAG: ${{ steps.get_tag.outputs.latest_tag }}
         run: |
-          # Logic to compare the tags and trigger the build accordingly
-          if [ "$last_tag" != "$tag" ]; then
-            echo "Triggering build for new tag: $tag"
-            # Trigger build process here
+          LAST_TAG=""
+          [ -f last_tag.txt ] && LAST_TAG=$(cat last_tag.txt)
+          
+          echo "上次记录: ${LAST_TAG:-无}"
+          echo "当前最新: $LATEST_TAG"
+
+          if [ "$LATEST_TAG" != "$LAST_TAG" ]; then
+            echo "🚀 检测到新版本，正在推送到 Build-ipq60xx..."
+            
+        
+            gh workflow run Build-ipq60xx \
+              -f repo_url="https://github.com/openwrt/openwrt" \
+              -f repo_branch="$LATEST_TAG" \
+              -f use_cache="false" \
+              -f build_parallel="true" \
+              -f single_device="nn6000-v2"
+            
+            echo "$LATEST_TAG" > last_tag.txt
+            echo "trigger_status=fired" >> $GITHUB_ENV
+          else
+            echo "☕ 源码暂无更新。"
+            echo "trigger_status=skipped" >> $GITHUB_ENV
           fi
 
       - name: Save Tag Cache
-        run: |
-          echo "$tag" > tag.cache
-          echo "Saved current tag to cache: $tag"
+        if: env.trigger_status == 'fired'
+        uses: actions/cache/save@v4
+        with:
+          path: last_tag.txt
+          key: last-processed-tag-${{ steps.get_tag.outputs.latest_tag }}
