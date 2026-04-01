@@ -1,29 +1,24 @@
-name: Cleanup Releases
-
-on:
-  schedule:
-    - cron: '0 0 * * *'
+name: Cleanup Old Releases
+  on:
+    release:
+      types: [published]
+    workflow_dispatch:
+  permissions:
+    contents: write
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+    - name: Cleanup Public Releases
+      run: |
+        gh release list --limit 10 --json name,tagName --jq '.[] | select(.creator.login == "github-actions[bot]") | .tagName' | xargs -I {} gh release delete {} --yes
 
-      - name: Cleanup releases in private repo
-        env:
-          PRIVATE_TOKEN: ${{ secrets.PRIVATE_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          const runCleanup = async () => {
-            const releases = await github.rest.repos.listReleases({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-            });
-            // Implement the logic to clean up releases...
-          };
+    - name: Cleanup Private Releases
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release list --limit 10 --json name,tagName --jq '.[] | select(.creator.login == "github-actions[bot]") | .tagName' | xargs -I {} gh release delete {} --yes
 
-          runCleanup();
-        
-        # Here we would add additional logic and implementation details to handle the release cleanup as per your requirements.
+    - name: Summary
+      run: echo "Cleanup completed!"
