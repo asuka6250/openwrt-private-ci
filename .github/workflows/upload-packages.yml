@@ -85,6 +85,8 @@ jobs:
             find . -maxdepth 1 ! -name ".git" ! -name "." -exec rm -rf {} +
             cp -rf ../final_content/* ./
             
+            echo 'apk.20008888.xyz' >CNAME
+            
             git add .
             if git diff --staged --quiet; then
               echo "☕ 文件内容无变化，跳过 Push。"
