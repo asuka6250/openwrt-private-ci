@@ -61,11 +61,11 @@ jobs:
           echo "统计: 共计 $COUNT 个 Bot Release"
 
           # 2. 判断是否需要删除
-          if [ "$COUNT" -le 10 ]; then
+          if [ "$COUNT" -le 2 ]; then
             echo "✅ 数量未超过 10 个，无需清理。"
           else
             # 计算需要删除的数量 (总数 - 保留的10个)
-            DELETE_LIMIT=$((COUNT - 10))
+            DELETE_LIMIT=$((COUNT - 2))
             echo "⚠️ 触发清理：保留最新的 10 个，准备删除最早的 $DELETE_LIMIT 个..."
             
             # 提取需要删除的对象（即排序后的前 DELETE_LIMIT 个）
