@@ -67,6 +67,7 @@ jobs:
             mkdir -p init_repo
             cp -rf final_content/* init_repo/
             cd init_repo
+            echo 'apk.20008888.xyz' >CNAME 
             git init
             git remote add origin "$AUTH_URL"
             git add .
