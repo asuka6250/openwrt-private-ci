@@ -2,11 +2,11 @@ name: Cleanup Old Bot Releases
 
 on:
   release:
-    types: [published] # 每次发布新 Release 时自动触发
+    types: [published] # 每次发布新 Release 时触发
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '🔍 仅预览（输出列表但不执行删除）'
+        description: '🔍 仅预览（不执行实际删除）'
         required: false
         type: boolean
         default: false
@@ -16,8 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # 分别处理本地仓库和你的私人仓库
-        repo_type: ['local', 'private']
+        repo_type: ['local', 'private'] # 同时处理本地和私有仓库
     
     steps:
       - name: Set Repository Context
@@ -41,34 +40,35 @@ jobs:
           echo "📂 正在检查仓库: $REPO"
           echo "========================================================="
 
-          # 1. 获取所有符合 Bot 命名规则的 Release (正则匹配 YYYY-MM-DD-HHMM 结尾)
-          # 使用 jq 提取名称和时间，并按时间【从早到后】排序
+          # 1. 获取所有符合 Bot 命名规则的 Release
+          # 关键修改：使用 sort_by(.tag) 替代 sort_by(.time)
+          # 这样会严格按照你名字里的日期（如 2026-03-29 < 2026-03-31）从早到后排序
           ALL_BOT_RELEASES=$(gh api repos/$REPO/releases --paginate \
             --jq '.[] | select(.tag_name | test(".*-[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{4}$")) | {name: .name, tag: .tag_name, id: .id, time: .created_at}' \
-            | jq -s 'sort_by(.time)')
+            | jq -s 'sort_by(.tag)')
 
           COUNT=$(echo "$ALL_BOT_RELEASES" | jq 'length')
 
-          echo "🤖 当前 Bot 发布的 Release 列表 (从早到后):"
+          echo "🤖 识别到的 Bot Release 列表 (按 Tag 日期由早到后):"
           echo "--------------------------------------------------------"
           if [ "$COUNT" -eq 0 ]; then
             echo "(无匹配的 Bot Release)"
           else
-            # 循环输出：[时间] 名字
-            echo "$ALL_BOT_RELEASES" | jq -r '.[] | "[\(.time)] \(.name)"'
+            # 格式化输出：[Tag名] (创建时间: 时间戳)
+            echo "$ALL_BOT_RELEASES" | jq -r '.[] | "[\(.tag)] (API_Time: \(.time))"'
           fi
           echo "--------------------------------------------------------"
           echo "统计: 共计 $COUNT 个 Bot Release"
 
-          # 2. 判断是否需要删除
+          # 2. 清理逻辑
           if [ "$COUNT" -le 2 ]; then
             echo "✅ 数量未超过 10 个，无需清理。"
           else
-            # 计算需要删除的数量 (总数 - 保留的10个)
+            # 计算删除量
             DELETE_LIMIT=$((COUNT - 2))
             echo "⚠️ 触发清理：保留最新的 10 个，准备删除最早的 $DELETE_LIMIT 个..."
             
-            # 提取需要删除的对象（即排序后的前 DELETE_LIMIT 个）
+            # 提取排序后最前面的几个（即日期最早的）
             TO_DELETE=$(echo "$ALL_BOT_RELEASES" | jq -c ".[0:$DELETE_LIMIT] | .[]")
 
             echo "$TO_DELETE" | while read -r row; do
@@ -77,15 +77,15 @@ jobs:
               ID=$(echo "$row" | jq -r '.id')
               
               if [ "$DRY_RUN" = "true" ]; then
-                echo " [预览模式] 跳过删除: $NAME"
+                echo " [预览模式] 准备删除: $TAG"
               else
-                echo " 🚀 正在执行删除: $NAME (Tag: $TAG)"
-                # 删除 Release 实体
+                echo " 🚀 正在执行删除: $TAG"
+                # 删除 Release 记录
                 gh api -X DELETE "repos/$REPO/releases/$ID" --silent
-                # 删除对应的 Git Tag 引用
-                gh api -X DELETE "repos/$REPO/git/refs/tags/$TAG" --silent || echo "  (Tag 已不存在)"
+                # 删除 Git Tag 引用
+                gh api -X DELETE "repos/$REPO/git/refs/tags/$TAG" --silent || echo "  (Tag 已清理)"
               fi
             done
             echo "--------------------------------------------------------"
-            echo "✨ 仓库 $REPO 清理任务执行完毕。"
+            echo "✨ 仓库 $REPO 处理完毕。"
           fi
