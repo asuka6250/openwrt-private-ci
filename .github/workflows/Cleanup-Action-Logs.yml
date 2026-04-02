@@ -1,4 +1,4 @@
-、name: Cleanup Action Logs
+name: Cleanup Action Logs
 
 on:
   schedule:
