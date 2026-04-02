@@ -1,0 +1,20 @@
+name: Cleanup Action Logs
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch: 
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs and list details
+        uses: corporate-gadget/delete-workflow-runs@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 0
+          keep_minimum_runs: 0
+          # 状态包括：completed, action_required, cancelled, failure, neutral, skipped, stale, success, timed_out
+          workflow_run_status: "completed,cancelled,failure,skipped"
