@@ -11,13 +11,24 @@ permissions:
   contents: read
 
 jobs:
-  delete-history:
+  delete-runs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete workflow runs
-        uses: Mattraider/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          retain_days: 0
-          keep_minimum_runs: 0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "正在获取所有 Workflow 列表..."
+          workflows=$(gh api repos/${{ github.repository }}/actions/workflows | jq -r '.workflows[].id')
+
+          for workflow_id in $workflows; do
+            echo "正在清理 Workflow ID: $workflow_id"
+            run_ids=$(gh api "repos/${{ github.repository }}/actions/workflows/$workflow_id/runs?per_page=100" \
+              | jq -r '.workflow_runs[] | select(.status != "in_progress") | .id')
+
+            for run_id in $run_ids; do
+              echo "正在删除运行记录 ID: $run_id"
+              gh api -X DELETE "repos/${{ github.repository }}/actions/runs/$run_id" --silent
+            done
+          done
+          echo "清理完成！"
