@@ -152,6 +152,7 @@ jobs:
     - name: Run Sync Script & Load Config
       run: |
         if [ -d "my_openwrt_custom" ]; then
+          chmod +x my_openwrt_custom/sync.sh
           SYNC_MODE=""
           if [ "${{ github.event.inputs.selective_sync }}" == "true" ]; then
             SYNC_MODE="1"
