@@ -1,5 +1,4 @@
 name: Build-ipq60xx
-
 on:
   workflow_dispatch:
     inputs:
@@ -11,6 +10,25 @@ on:
         description: '🌿 源码分支'
         required: true
         default: 'main'
+      # --- 新增/完善的同步相关变量 ---
+      selective_sync:
+        description: '🔄 开启特定平台源码同步 (COPY_TARGET)'
+        required: false
+        type: boolean
+        default: false
+      source_code:
+        description: '🔗 同步源地址 (SOURCE_CODE)'
+        required: false
+        default: ''
+      source_branch:
+        description: '🌿 同步源分支 (SOURCE_BRANCH)'
+        required: false
+        default: ''
+      # --------------------------
+      luci_version:
+        description: '🏮 Immortal-LuCI 版本'
+        required: false
+        default: ''
       use_cache:
         description: '💾 使用编译缓存'
         required: false
@@ -29,17 +47,8 @@ on:
         options:
           - 'nn6000-v2'
           - 're-ss-01'
-      selective_sync:
-        description: 'Mode1'
-        required: false
-        type: boolean
-        default: false
       extra_plugins:
         description: '🧩 额外插件 (空格分隔)'
-        required: false
-        default: ''
-      luci_version:
-        description: 'immortal-luci-version'
         required: false
         default: ''
 
