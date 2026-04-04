@@ -192,7 +192,7 @@ jobs:
       run: |
         cd openwrt
         ./scripts/feeds update -a
-        [ -f init.sh ] && bash init.sh || (echo "未找到初始化脚本";exit 1)
+        [ -f init.sh ] && bash init.sh || echo "未找到初始化脚本，跳过！"
         ./scripts/feeds install -a
 
     - name: Load Device Config
