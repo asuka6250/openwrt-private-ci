@@ -175,6 +175,9 @@ jobs:
           ${{ runner.os }}-openwrt-${{ matrix.device }}-${{ needs.setup.outputs.source_key }}-
 
     - name: Run Sync Script & Load Config
+      env:
+        REPO_URL: ${{ github.event.inputs.repo_url }}
+        ENABLE_NSS: ${{github.event.inputs.enable_nss}}
       run: |
         if [ -d "my_openwrt_custom" ]; then
           chmod +x my_openwrt_custom/sync.sh
